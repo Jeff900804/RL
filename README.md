@@ -85,6 +85,6 @@ num_envs: 4096
 ## 2. Training estimator
 ### 2-1. Framework
 
-![image](https://github.com/Jeff900804/RL/blob/main/image/framework1.png)
+![image](https://github.com/Jeff900804/RL/blob/main/image/framework2.png)
 ### 2-2. Collect dataset
 
