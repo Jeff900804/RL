@@ -87,4 +87,7 @@ num_envs: 4096
 We designed an estimator to estimate the friction coefficient and coefficient of restitution in the current environment. The dataset is collected by randomly assigning friction coefficients (0.1-1.2) and coefficients of restitution (0.0-0.3) within a simulated environment. We collect the current ground truth and the state and action data from the past 50 records, and calculate the loss.
 ![image](https://github.com/Jeff900804/RL/blob/main/image/framework2-1.png)
 ### 2-2. Collect dataset
-
+The computer system uses 64GB of RAM, archives up to 3 episodes at a time, and stores data as a dataset with dimensions (1495200*2850). To obtain more data, we retrieved the friction_dataset_0-3.npz three times.
+```python
+python scripts/rsl_rl/collect_friction_dataset.py    --task Unitree-Go2-Velocity     --device cuda:0     --episodes 3     --max_steps 1000     --history_len 50     --output friction_dataset_0.npz --num_envs 512  --checkpoint ./logs/rsl_rl/unitree_go2_velocity/2025-12-11_20-55-57_mu_0.1-1.2/model_9999.pt 
+```
