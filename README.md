@@ -41,7 +41,7 @@ cd untree_rl_lab
 ./unitree_rl_lab.sh -i
 ```
 
-## 1.Training RL policy
+## 1. Training RL policy
 
 ### 1-1. Framework
 We use the unitree_rl_lab training framework. Within this framework, we incorporate the friction coefficient and restitution coefficient in the environment as observed parameters of the policy, enabling the agent to generate different strategies based on the current environmental variables.
@@ -96,3 +96,6 @@ The estimator is trained using three datasets at a time and archived into a sing
 ```python
 python scripts/rsl_rl/train_friction_estimator.py     --data_prefix friction_dataset_     --num_shards 3     --batch_size 2048     --epochs 100     --lr 1e-3     --device cuda:0
 ```
+## 3. Play the agent with estimator in simulation
+### 3-1. Framework
+![image](https://github.com/Jeff900804/RL/blob/main/image/framework3.png)
