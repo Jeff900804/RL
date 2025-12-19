@@ -1,6 +1,11 @@
 # Team 14 Final project
 ## Revisiting Rapid Motor Adaptation for Quadruped Locomotion
-abstract...
+Experimental results demonstrate that the proposed simplified RMA architecture
+achieves higher robustness than a standard non-adaptive policy baseline, while
+preserving training stability and significantly reducing computational overhead.
+These findings indicate that RMA-inspired adaptation mechanisms remain effective
+even with constrained model capacity, highlighting their practicality for educational
+use and rapid prototyping.
 ## Environmemt
 ### Installing Isaac Sim
 You can create the Isaac Lab environment using the following commands.
