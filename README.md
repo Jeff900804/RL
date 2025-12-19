@@ -27,9 +27,16 @@ cd /payh/to/RL_Final_project
 git clone https://github.com/isaac-sim/IsaacLab.git
 ```
 #### Installation
-Can install only the rsl_rl framework
+Run the install command that iterates over all the extensions in source directory and installs them using pip
 ```bash
 sudo apt install cmake build-essential
 cd IsaacLab/
-./isaaclab.sh --install rsl_rl  # or "./isaaclab.sh -i rsl_rl"
+./isaaclab.sh --install
+```
+### Installing Unitree RL Lab
+Use a python interpreter that has Isaac Lab installed, install the library in editable mode using:
+```bash
+cd ..
+cd untree_rl_lab
+./unitree_rl_lab.sh -i
 ```
