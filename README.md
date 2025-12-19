@@ -7,3 +7,7 @@ You can create the Isaac Lab environment using the following commands.
 conda create -n env_isaaclab python=3.11
 conda activate env_isaaclab
 ```
+Ensure the latest pip version is installed. To update pip, run the following command from inside the virtual environment:
+```bash
+pip install --upgrade pip
+```
