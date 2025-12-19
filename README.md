@@ -41,13 +41,47 @@ cd untree_rl_lab
 ./unitree_rl_lab.sh -i
 ```
 
-## 1.Training (RL policy)
+## 1.Training RL policy
 
-1-1.Framework
+### 1-1. Framework
 We use the unitree_rl_lab training framework. Within this framework, we incorporate the friction coefficient and restitution coefficient in the environment as observed parameters of the policy, enabling the agent to generate different strategies based on the current environmental variables.
 ![image](https://github.com/Jeff900804/RL/blob/main/image/framework1.png)
 
-1-2.
+### 1-2. Envs setting
+File path:   
+  /unitree_rl_lab/source/unitree_rl_la/unitree_rl_lab/tasks/locomotion/robots/go2/velocity_env_cfg.py  
+     
+First, add a foot_friction in observation. 
+```python
+@configclass
+class ObservationsCfg:
+    """Observation specifications for the MDP."""
+
+    @configclass
+    class PolicyCfg(ObsGroup):
+        """Observations for policy group."""
+        # observation terms (order preserved)
+        ...
+
+        foot_friction = ObsTerm(
+           func=mdp.foot_friction_4legs,
+           clip=(-10.0, 10.0),
+        )
+        ...
+
+    @configclass
+    class CriticCfg(ObsGroup):
+        """Observations for critic group."""
+        ...
+        foot_friction = ObsTerm(
+           func=mdp.foot_friction_4legs,
+           clip=(-10.0, 10.0),
+        )
+```
+### 1-3. Training RL policy   
 ```python
 ./unitree_rl_lab.sh -t --task Unitree-Go2-Velocity --headless  
 ```
+
+## 2. Training estimator
+
