@@ -84,7 +84,7 @@ num_envs: 4096
 
 ## 2. Training estimator
 ### 2-1. Framework
-
+We designed an estimator to estimate the friction coefficient and coefficient of restitution in the current environment. The dataset is collected by randomly assigning friction coefficients (0.1-1.2) and coefficients of restitution (0.0-0.3) within a simulated environment. We collect the current ground truth and the state and action data from the past 50 records, and calculate the loss.
 ![image](https://github.com/Jeff900804/RL/blob/main/image/framework2-1.png)
 ### 2-2. Collect dataset
 
