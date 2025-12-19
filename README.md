@@ -49,7 +49,7 @@ We use the unitree_rl_lab training framework. Within this framework, we incorpor
 
 ### 1-2. Envs setting
 File path:   
-  /unitree_rl_lab/source/unitree_rl_la/unitree_rl_lab/tasks/locomotion/robots/go2/velocity_env_cfg.py  
+  #/unitree_rl_lab/source/unitree_rl_la/unitree_rl_lab/tasks/locomotion/robots/go2/velocity_env_cfg.py  
      
 First, we add a foot_friction in observation. (Just introduce what we do.)
 ```python
@@ -79,6 +79,8 @@ class ObservationsCfg:
         )
 ```
 ### 1-3. Training RL policy   
+Training times: 10000  
+num_envs: 4096
 ```python
 ./unitree_rl_lab.sh -t --task Unitree-Go2-Velocity --headless  
 ```
