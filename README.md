@@ -2,7 +2,7 @@
 ## Revisiting Rapid Motor Adaptation for Quadruped Locomotion
 good
 ## Environmemt
-### Installing IsaacSim
+### Installing Isaac Sim
 You can create the Isaac Lab environment using the following commands.
 ```bash
 conda create -n env_isaaclab python=3.11
@@ -19,4 +19,17 @@ pip install "isaacsim[all,extscache]==5.1.0" --extra-index-url https://pypi.nvid
 Install a CUDA-enabled PyTorch build that matches your system architecture:
 ```bash
 pip install -U torch==2.7.0 torchvision==0.22.0 --index-url https://download.pytorch.org/whl/cu128
+```
+## Installing Isaac Lab
+### Cloning Isaac lab
+```bash
+cd /payh/to/RL_Final_project
+git clone https://github.com/isaac-sim/IsaacLab.git
+```
+### Installation
+Can install only the rsl_rl framework
+```bash
+sudo apt install cmake build-essential
+cd IsaacLab/
+./isaaclab.sh --install rsl_rl  # or "./isaaclab.sh -i rsl_rl"
 ```
