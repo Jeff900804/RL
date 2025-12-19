@@ -41,8 +41,13 @@ cd untree_rl_lab
 ./unitree_rl_lab.sh -i
 ```
 
-## Training (RL policy)
+## 1.Training (RL policy)
+
+1-1.Framework
+We use the unitree_rl_lab training framework. Within this framework, we incorporate the friction coefficient and restitution coefficient in the environment as observed parameters of the policy, enabling the agent to generate different strategies based on the current environmental variables.
+![image](https://github.com/Jeff900804/RL/blob/main/image/framework1.png)
+
+1-2.
 ```python
 ./unitree_rl_lab.sh -t --task Unitree-Go2-Velocity --headless  
 ```
-![image](https://github.com/Jeff900804/RL/blob/main/image/framework1.png)
