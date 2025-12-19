@@ -1,0 +1,474 @@
+--- git status ---
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   deploy/robots/go2/config/config.yaml
+	modified:   source/unitree_rl_lab/unitree_rl_lab/assets/robots/unitree.py
+	modified:   source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/agents/rsl_rl_ppo_cfg.py
+	modified:   source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/mdp/observations.py
+	modified:   source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/go2/velocity_env_cfg.py
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	deploy/thirdparty/onnxruntime-linux-x64-1.22.0.tgz
+	deploy/thirdparty/thirdparty
+	scripts/rsl_rl/collect_friction_dataset.py
+
+no changes added to commit (use "git add" and/or "git commit -a") 
+
+
+--- git diff ---
+diff --git a/deploy/robots/go2/config/config.yaml b/deploy/robots/go2/config/config.yaml
+index caba2de..d729848 100644
+--- a/deploy/robots/go2/config/config.yaml
++++ b/deploy/robots/go2/config/config.yaml
+@@ -27,5 +27,5 @@ FSM:
+   Velocity:
+     transitions: 
+       Passive: LT + B.on_pressed
+-    policy_dir: ../../../logs/rsl_rl/unitree_go2_velocity
+-    
+\ No newline at end of file
++    policy_dir: ../../../logs/rsl_rl/unitree_go2_velocity/2025-12-08_15-28-54
++    
+diff --git a/source/unitree_rl_lab/unitree_rl_lab/assets/robots/unitree.py b/source/unitree_rl_lab/unitree_rl_lab/assets/robots/unitree.py
+index e78413a..8fc027b 100644
+--- a/source/unitree_rl_lab/unitree_rl_lab/assets/robots/unitree.py
++++ b/source/unitree_rl_lab/unitree_rl_lab/assets/robots/unitree.py
+@@ -17,8 +17,8 @@ from isaaclab.utils import configclass
+ 
+ from unitree_rl_lab.assets.robots import unitree_actuators
+ 
+-UNITREE_MODEL_DIR = "path/to/unitree_model"  # Replace with the actual path to your unitree_model directory
+-UNITREE_ROS_DIR = "path/to/unitree_ros"  # Replace with the actual path to your unitree_ros package
++UNITREE_MODEL_DIR = "/home/jeff/mujoco/unitree_model"  # Replace with the actual path to your unitree_model directory
++UNITREE_ROS_DIR = "/home/jeff/mujoco/unitree_ros"  # Replace with the actual path to your unitree_ros package
+ 
+ 
+ @configclass
+@@ -93,12 +93,12 @@ class UnitreeUrdfFileCfg(sim_utils.UrdfFileCfg):
+ """ Configuration for the Unitree robots."""
+ 
+ UNITREE_GO2_CFG = UnitreeArticulationCfg(
+-    # spawn=UnitreeUrdfFileCfg(
+-    #     asset_path=f"{UNITREE_ROS_DIR}/robots/go2_description/urdf/go2_description.urdf",
+-    # ),
+-    spawn=UnitreeUsdFileCfg(
+-        usd_path=f"{UNITREE_MODEL_DIR}/Go2/usd/go2.usd",
+-    ),
++    spawn=UnitreeUrdfFileCfg(
++         asset_path=f"{UNITREE_ROS_DIR}/robots/go2_description/urdf/go2_description.urdf",
++     ),
++    #spawn=UnitreeUsdFileCfg(
++    #    usd_path=f"{UNITREE_MODEL_DIR}/Go2/usd/go2.usd",
++    #),
+     init_state=ArticulationCfg.InitialStateCfg(
+         pos=(0.0, 0.0, 0.4),
+         joint_pos={
+diff --git a/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/agents/rsl_rl_ppo_cfg.py b/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/agents/rsl_rl_ppo_cfg.py
+index f5f98fb..af02d4e 100644
+--- a/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/agents/rsl_rl_ppo_cfg.py
++++ b/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/agents/rsl_rl_ppo_cfg.py
+@@ -10,7 +10,7 @@ from isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlPpoActorCriticCfg, R
+ @configclass
+ class BasePPORunnerCfg(RslRlOnPolicyRunnerCfg):
+     num_steps_per_env = 24
+-    max_iterations = 50000
++    max_iterations = 10000
+     save_interval = 100
+     experiment_name = ""  # same as task name
+     empirical_normalization = False
+diff --git a/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/mdp/observations.py b/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/mdp/observations.py
+index b1df0d4..8efdca8 100644
+--- a/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/mdp/observations.py
++++ b/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/mdp/observations.py
+@@ -17,3 +17,99 @@ def gait_phase(env: ManagerBasedRLEnv, period: float) -> torch.Tensor:
+     phase[:, 0] = torch.sin(global_phase * torch.pi * 2.0)
+     phase[:, 1] = torch.cos(global_phase * torch.pi * 2.0)
+     return phase
++
++def foot_friction_4legs(env: ManagerBasedRLEnv) -> torch.Tensor:
++    """回傳每個 env 四隻腳各自的 [mu_s, mu_d, e]，最後攤平成 (N, 12)。
++
++    預期 robot 的 body_names 類似：
++    - "FL_foot"
++    - "FR_foot"
++    - "RL_foot"
++    - "RR_foot"
++    如果名稱不同，可以把分組邏輯改掉（例如用 contains "front_left_foot" 等等）。
++    """
++    device = env.device
++    num_envs = env.num_envs
++
++    # ===== 第一次呼叫時：建立「哪幾個 shape 屬於哪隻腳」的索引 =====
++    if not hasattr(env, "_foot_shape_indices_by_leg"):
++        robot = env.scene["robot"]
++
++        # 1) 取得 body_names，找出四隻腳的 body_id
++        try:
++            body_names = list(robot.data.body_names)
++        except AttributeError:
++            body_names = list(robot.root_physx_view.body_names)
++
++        # 將 *_foot 依照 "FL/FR/RL/RR" 分組
++        leg_to_body_ids = {"FL": [], "FR": [], "RL": [], "RR": []}
++        for i, name in enumerate(body_names):
++            if not name.endswith("_foot"):
++                continue
++            # 取前綴當成腳的 label，例如 "FL_foot" -> "FL"
++            leg_label = name.split("_")[0]
++            if leg_label in leg_to_body_ids:
++                leg_to_body_ids[leg_label].append(i)
++
++        # 確認有抓到四隻腳
++        for leg in ["FL", "FR", "RL", "RR"]:
++            if len(leg_to_body_ids[leg]) == 0:
++                raise RuntimeError(
++                    f"[foot_friction_4legs] 找不到 {leg}_foot 對應的 body，實際 body_names = {body_names}"
++                )
++
++        # 2) 計算每個 body 有幾個 shapes（抄 IsaacLab randomize_rigid_body_material 的作法）
++        num_shapes_per_body: list[int] = []
++        for link_path in robot.root_physx_view.link_paths[0]:
++            link_physx_view = robot._physics_sim_view.create_rigid_body_view(link_path)  # type: ignore
++            num_shapes_per_body.append(link_physx_view.max_shapes)
++
++        total_num_shapes = sum(num_shapes_per_body)
++        expected_shapes = robot.root_physx_view.max_shapes
++        if total_num_shapes != expected_shapes:
++            raise RuntimeError(
++                "[foot_friction_4legs] 解析 shape 數量不一致："
++                f" sum(num_shapes_per_body)={total_num_shapes}, "
++                f"root_physx_view.max_shapes={expected_shapes}"
++            )
++
++        # 3) 對每一隻腳，收集它名下所有 body 對應的 shape indices
++        foot_shape_indices_by_leg = {}
++        for leg, body_ids in leg_to_body_ids.items():
++            indices = []
++            for body_id in body_ids:
++                start_idx = sum(num_shapes_per_body[:body_id])
++                end_idx = start_idx + num_shapes_per_body[body_id]
++                indices.extend(range(start_idx, end_idx))
++            if len(indices) == 0:
++                raise RuntimeError(f"[foot_friction_4legs] {leg} 沒有任何 shape")
++            foot_shape_indices_by_leg[leg] = torch.as_tensor(
++                indices, dtype=torch.long, device="cpu"
++            )
++
++        # cache 起來，之後就不用再算一次
++        env._foot_shape_indices_by_leg = foot_shape_indices_by_leg
++
++    # ===== 每次呼叫：從 PhysX 讀材質 → 只取腳底 → 分別算四隻腳平均 =====
++    robot = env.scene["robot"]
++    materials = robot.root_physx_view.get_material_properties()  # (N_env, max_shapes, 3) 在 CPU
++    if not isinstance(materials, torch.Tensor):
++        materials = torch.from_numpy(materials)
++
++    feats_per_leg = []
++    for leg in ["FL", "FR", "RL", "RR"]:
++        idx = env._foot_shape_indices_by_leg[leg]     # shape_indices for this leg (CPU)
++        leg_mats = materials[:, idx, :]               # (N_env, N_shapes_leg, 3)
++
++        mu_s = leg_mats[:, :, 0].mean(dim=1).to(device)
++        mu_d = leg_mats[:, :, 1].mean(dim=1).to(device)
++        e    = leg_mats[:, :, 2].mean(dim=1).to(device)
++
++        feats_per_leg.append(mu_s)
++        feats_per_leg.append(mu_d)
++        feats_per_leg.append(e)
++
++    # feats_per_leg: list of 12 tensors，每個 shape = (N_env,)
++    # → stack → (12, N_env) 再 transpose → (N_env, 12)
++    feet_feat = torch.stack(feats_per_leg, dim=0).T
++    return feet_feat  # (num_envs, 12)
+diff --git a/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/go2/velocity_env_cfg.py b/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/go2/velocity_env_cfg.py
+index 7496d76..d3fa95a 100644
+--- a/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/go2/velocity_env_cfg.py
++++ b/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/go2/velocity_env_cfg.py
+@@ -21,9 +21,13 @@ from isaaclab.utils.noise import AdditiveUniformNoiseCfg as Unoise
+ from unitree_rl_lab.assets.robots.unitree import UNITREE_GO2_CFG as ROBOT_CFG
+ from unitree_rl_lab.tasks.locomotion import mdp
+ 
++from isaaclab.envs.manager_based_env import ManagerBasedEnv
++import torch
++import torch.nn.functional as F
++
+ COBBLESTONE_ROAD_CFG = terrain_gen.TerrainGeneratorCfg(
+     size=(8.0, 8.0),
+-    border_width=20.0,
++    border_width=0.0,
+     num_rows=10,
+     num_cols=20,
+     horizontal_scale=0.1,
+@@ -32,35 +36,40 @@ COBBLESTONE_ROAD_CFG = terrain_gen.TerrainGeneratorCfg(
+     difficulty_range=(0.0, 1.0),
+     use_cache=False,
+     sub_terrains={
+-        "flat": terrain_gen.MeshPlaneTerrainCfg(proportion=0.1),
+-        # "random_rough": terrain_gen.HfRandomUniformTerrainCfg(
+-        #     proportion=0.1, noise_range=(0.01, 0.06), noise_step=0.01, border_width=0.25
+-        # ),
+-        # "hf_pyramid_slope": terrain_gen.HfPyramidSlopedTerrainCfg(
+-        #     proportion=0.1, slope_range=(0.0, 0.4), platform_width=2.0, border_width=0.25
+-        # ),
+-        # "hf_pyramid_slope_inv": terrain_gen.HfInvertedPyramidSlopedTerrainCfg(
+-        #     proportion=0.1, slope_range=(0.0, 0.4), platform_width=2.0, border_width=0.25
+-        # ),
+-        # "boxes": terrain_gen.MeshRandomGridTerrainCfg(
+-        #     proportion=0.2, grid_width=0.45, grid_height_range=(0.05, 0.2), platform_width=2.0
+-        # ),
+-        # "pyramid_stairs": terrain_gen.MeshPyramidStairsTerrainCfg(
+-        #     proportion=0.2,
+-        #     step_height_range=(0.05, 0.23),
+-        #     step_width=0.3,
+-        #     platform_width=3.0,
+-        #     border_width=1.0,
+-        #     holes=False,
+-        # ),
+-        # "pyramid_stairs_inv": terrain_gen.MeshInvertedPyramidStairsTerrainCfg(
+-        #     proportion=0.2,
+-        #     step_height_range=(0.05, 0.23),
+-        #     step_width=0.3,
+-        #     platform_width=3.0,
+-        #     border_width=1.0,
+-        #     holes=False,
+-        # ),
++        "flat": terrain_gen.MeshPlaneTerrainCfg(proportion=0.0),
++        "random_rough": terrain_gen.HfRandomUniformTerrainCfg(
++            proportion=1.0, noise_range=(0.01, 0.06), noise_step=0.01, border_width=0.0
++        ),
++        "hf_pyramid_slope": terrain_gen.HfPyramidSlopedTerrainCfg(
++            proportion=0.0, slope_range=(0.0, 0.4), platform_width=2.0, border_width=0.25
++        ),
++        "hf_pyramid_slope_inv": terrain_gen.HfInvertedPyramidSlopedTerrainCfg(
++            proportion=0.0, slope_range=(0.0, 0.4), platform_width=2.0, border_width=0.25
++        ),
++        "boxes": terrain_gen.MeshRandomGridTerrainCfg(
++            proportion=0.0, grid_width=0.45, grid_height_range=(0.05, 0.2), platform_width=2.0
++        ),
++        "pyramid_stairs": terrain_gen.MeshPyramidStairsTerrainCfg(
++            proportion=0.0,
++            step_height_range=(0.05, 0.23),
++            step_width=0.3,
++            platform_width=3.0,
++            border_width=1.0,
++            holes=False,
++        ),
++        "pyramid_stairs_inv": terrain_gen.MeshInvertedPyramidStairsTerrainCfg(
++            proportion=0.0,
++            step_height_range=(0.05, 0.23),
++            step_width=0.3,
++            platform_width=3.0,
++            border_width=1.0,
++            holes=False,
++        ),
++        "Gap": terrain_gen.MeshGapTerrainCfg(
++              proportion=0.0,
++	      gap_width_range=(0.1, 0.8),
++	      platform_width=3.0,
++	 ),
+     },
+ )
+ 
+@@ -119,7 +128,7 @@ class EventCfg:
+     # startup
+     physics_material = EventTerm(
+         func=mdp.randomize_rigid_body_material,
+-        mode="startup",
++        mode="startup", #"startup"
+         params={
+             "asset_cfg": SceneEntityCfg("robot", body_names=".*"),
+             "static_friction_range": (0.3, 1.2),
+@@ -128,6 +137,19 @@ class EventCfg:
+             "num_buckets": 64,
+         },
+     )
++    
++    # 腳：每個 episode reset 時 random，一般會用稍微大的範圍讓學習有感
++    physics_material_feet = EventTerm(
++        func=mdp.randomize_rigid_body_material,
++        mode="reset",
++        params={
++            "asset_cfg": SceneEntityCfg("robot", body_names=".*_foot"),
++            "static_friction_range": (0.1, 1.2),
++            "dynamic_friction_range": (0.1, 1.2),
++            "restitution_range": (0.0, 0.3),
++            "num_buckets": 64,
++        },
++    )
+ 
+     add_base_mass = EventTerm(
+         func=mdp.randomize_rigid_body_mass,
+@@ -138,6 +160,7 @@ class EventCfg:
+             "operation": "add",
+         },
+     )
++    
+ 
+     # reset
+     base_external_force_torque = EventTerm(
+@@ -199,6 +222,12 @@ class CommandsCfg:
+         limit_ranges=mdp.UniformLevelVelocityCommandCfg.Ranges(
+             lin_vel_x=(-1.0, 1.0), lin_vel_y=(-0.4, 0.4), ang_vel_z=(-1.0, 1.0)
+         ),
++        # ranges=mdp.UniformLevelVelocityCommandCfg.Ranges(
++        #     lin_vel_x=(0.1, 1.0), lin_vel_y=(0.0, 0.0), ang_vel_z=(0.0, 0.0)
++        # ),
++        # limit_ranges=mdp.UniformLevelVelocityCommandCfg.Ranges(
++        #     lin_vel_x=(0.0, 2.0), lin_vel_y=(-0.4, 0.4), ang_vel_z=(-1.0, 1.0)
++        # ),
+     )
+ 
+ 
+@@ -230,6 +259,15 @@ class ObservationsCfg:
+             func=mdp.joint_vel_rel, scale=0.05, clip=(-100, 100), noise=Unoise(n_min=-1.5, n_max=1.5)
+         )
+         last_action = ObsTerm(func=mdp.last_action, clip=(-100, 100))
++        
++        # height_scanner = ObsTerm(func=mdp.height_scan,
++        #     params={"sensor_cfg": SceneEntityCfg("height_scanner")},
++        #     clip=(-1.0, 5.0),
++        # )
++        foot_friction = ObsTerm(
++            func=mdp.foot_friction_4legs,
++            clip=(-10.0, 10.0),
++        )
+ 
+         def __post_init__(self):
+             # self.history_length = 5
+@@ -253,18 +291,68 @@ class ObservationsCfg:
+         joint_vel_rel = ObsTerm(func=mdp.joint_vel_rel, scale=0.05, clip=(-100, 100))
+         joint_effort = ObsTerm(func=mdp.joint_effort, scale=0.01, clip=(-100, 100))
+         last_action = ObsTerm(func=mdp.last_action, clip=(-100, 100))
+-        # height_scanner = ObsTerm(func=mdp.height_scan,
+-        #     params={"sensor_cfg": SceneEntityCfg("height_scanner")},
+-        #     clip=(-1.0, 5.0),
+-        # )
++        height_scanner = ObsTerm(func=mdp.height_scan,
++            params={"sensor_cfg": SceneEntityCfg("height_scanner")},
++            clip=(-1.0, 5.0),
++        )
++        foot_friction = ObsTerm(
++            func=mdp.foot_friction_4legs,
++            clip=(-10.0, 10.0),
++        )
+ 
+         # def __post_init__(self):
+         #     self.history_length = 5
+ 
+     # privileged observations
+     critic: CriticCfg = CriticCfg()
++    
++    # ⭐ 新增：Estimator 用的觀測（不能有 foot_friction，後面要當 label）
++    @configclass
++    class EstimatorCfg(ObsGroup):
++        """Observations for friction estimator (no friction ground truth)."""
++
++        base_ang_vel = ObsTerm(func=mdp.base_ang_vel, scale=0.2, clip=(-100, 100))
++        projected_gravity = ObsTerm(func=mdp.projected_gravity, clip=(-100, 100))
++        velocity_commands = ObsTerm(
++            func=mdp.generated_commands, clip=(-100, 100), params={"command_name": "base_velocity"}
++        )
++        joint_pos_rel = ObsTerm(func=mdp.joint_pos_rel, clip=(-100, 100))
++        joint_vel_rel = ObsTerm(func=mdp.joint_vel_rel, scale=0.05, clip=(-100, 100))
++        last_action = ObsTerm(func=mdp.last_action, clip=(-100, 100))
+ 
++        def __post_init__(self):
++            # estimator 想要乾淨一點的訊號，可以先關 noise
++            self.enable_corruption = False
++            self.concatenate_terms = True
+ 
++    # ⭐ 讓 env 真的輸出這個 group
++    estimator: EstimatorCfg = EstimatorCfg()
++    
++
++def jump_up_reward(
++    env: ManagerBasedEnv,
++    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot", body_names="base"),
++    min_height: float = 0.30,
++    min_up_vel: float = 0.3,
++) -> torch.Tensor:
++    """只要身體有明顯「往上跳」就給 bonus。
++
++    - min_height: 只有當 base_z 高於這個高度才算在跳
++    - min_up_vel: 垂直速度大於這個值才算真的往上跳
++    """
++    robot = env.scene[asset_cfg.name]
++
++    base_pos = robot.data.root_pos_w      # (N, 3)
++    base_vel = robot.data.root_lin_vel_w  # (N, 3)
++
++    z  = base_pos[:, 2]
++    vz = base_vel[:, 2]
++
++    mask = (z > min_height) & (vz > min_up_vel)
++    # 只在有「向上移動」同時高度夠高的時候給 reward，值跟 vz 成正比
++    bonus = torch.where(mask, vz, torch.zeros_like(vz))
++    return bonus
++    
+ @configclass
+ class RewardsCfg:
+     """Reward terms for the MDP."""
+@@ -278,7 +366,7 @@ class RewardsCfg:
+     )
+ 
+     # -- base
+-    base_linear_velocity = RewTerm(func=mdp.lin_vel_z_l2, weight=-2.0)
++    base_linear_velocity = RewTerm(func=mdp.lin_vel_z_l2, weight=-2.0) #-2.0
+     base_angular_velocity = RewTerm(func=mdp.ang_vel_xy_l2, weight=-0.05)
+     joint_vel = RewTerm(func=mdp.joint_vel_l2, weight=-0.001)
+     joint_acc = RewTerm(func=mdp.joint_acc_l2, weight=-2.5e-7)
+@@ -288,7 +376,7 @@ class RewardsCfg:
+     energy = RewTerm(func=mdp.energy, weight=-2e-5)
+ 
+     # -- robot
+-    flat_orientation_l2 = RewTerm(func=mdp.flat_orientation_l2, weight=-2.5)
++    flat_orientation_l2 = RewTerm(func=mdp.flat_orientation_l2, weight=-2.5) #-2.5
+ 
+     joint_pos = RewTerm(
+         func=mdp.joint_position_penalty,
+@@ -303,7 +391,7 @@ class RewardsCfg:
+     # -- feet
+     feet_air_time = RewTerm(
+         func=mdp.feet_air_time,
+-        weight=0.1,
++        weight=0.1, #0.1
+         params={
+             "sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*_foot"),
+             "command_name": "base_velocity",
+@@ -335,12 +423,21 @@ class RewardsCfg:
+     # -- other
+     undesired_contacts = RewTerm(
+         func=mdp.undesired_contacts,
+-        weight=-1,
++        weight=-1.0, #-1.0
+         params={
+             "threshold": 1,
+             "sensor_cfg": SceneEntityCfg("contact_forces", body_names=["Head_.*", ".*_hip", ".*_thigh", ".*_calf"]),
+         },
+     )
++    # jump_up = RewTerm(
++    #     func=jump_up_reward,
++    #     weight=3.0,
++    #     params={
++    #         "asset_cfg": SceneEntityCfg("robot", body_names="base"),
++    #         "min_height": 0.30,
++    #         "min_up_vel": 0.3,
++    #     },
++    # )
+ 
+ 
+ @configclass
+@@ -410,6 +507,6 @@ class RobotPlayEnvCfg(RobotEnvCfg):
+     def __post_init__(self):
+         super().__post_init__()
+         self.scene.num_envs = 32
+-        self.scene.terrain.terrain_generator.num_rows = 2
+-        self.scene.terrain.terrain_generator.num_cols = 1
++        self.scene.terrain.terrain_generator.num_rows = 6
++        self.scene.terrain.terrain_generator.num_cols = 6
+         self.commands.base_velocity.ranges = self.commands.base_velocity.limit_ranges

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libgo2_controller_lib.a CMakeFiles/go2_controller_lib.dir/src/FrictionEstimator.cpp.o CMakeFiles/go2_controller_lib.dir/src/State_RLBase.cpp.o
+/usr/bin/ranlib libgo2_controller_lib.a
