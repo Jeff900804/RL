@@ -103,4 +103,9 @@ python scripts/rsl_rl/train_friction_estimator.py     --data_prefix friction_dat
 ```
 ## 3. Play the agent with estimator in simulation
 ### 3-1. Framework
+To enable future real-world demonstrations, we assigned commands for the agent's linear and angular velocities. The coefficient of friction and coefficient of restitution were estimated using our designed estimator and input into the policy at a frequency set to 10Hz.
 ![image](https://github.com/Jeff900804/RL/blob/main/image/framework3.png)
+### 3-2. Play
+```python
+python scripts/rsl_rl/play_with_estimator.py     --task Unitree-Go2-Velocity     --device cuda:0     --num_envs 128     --checkpoint ./logs/rsl_rl/unitree_go2_velocity/2025-12-11_20-55-57_mu_0.1-1.2/model_9999.pt 
+```
