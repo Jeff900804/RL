@@ -41,4 +41,7 @@ cd untree_rl_lab
 ./unitree_rl_lab.sh -i
 ```
 
-
+## Training (RL policy)
+```python
+./unitree_rl_lab.sh -t --task Unitree-Go2-Velocity --headless  
+```
