@@ -100,7 +100,7 @@ python scripts/rsl_rl/collect_friction_dataset.py    --task Unitree-Go2-Velocity
 The estimator is trained using three datasets at a time and archived into a single best_model (the model with the lowest loss is retrieved each time).
 ```python
 python scripts/rsl_rl/train_friction_estimator.py     --data_prefix friction_dataset_     --num_shards 3     --batch_size 2048     --epochs 100     --lr 1e-3     --device cuda:0
-```
+```  
 ## 3. Play the agent with estimator in simulation
 ### 3-1. Framework
 To enable future real-world demonstrations, we assigned commands for the agent's linear and angular velocities. The coefficient of friction and coefficient of restitution were estimated using our designed estimator and input into the policy at a frequency set to 10Hz.
