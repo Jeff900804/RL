@@ -1,6 +1,6 @@
 # Team 14 Final project
 ## Revisiting Rapid Motor Adaptation for Quadruped Locomotion
-good
+abstract...
 ## Environmemt
 ### Installing Isaac Sim
 You can create the Isaac Lab environment using the following commands.
