@@ -42,7 +42,7 @@ cd IsaacLab/
 Use a python interpreter that has Isaac Lab installed, install the library in editable mode using:
 ```bash
 cd ..
-cd untree_rl_lab
+cd unitree_rl_lab
 ./unitree_rl_lab.sh -i
 ```
 
