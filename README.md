@@ -53,7 +53,7 @@ We use the unitree_rl_lab training framework. Within this framework, we incorpor
 ![image](https://github.com/Jeff900804/RL/blob/main/image/framework1.png)
 
 ### 1-2. Envs setting  
-First, we add a foot_friction in [velocity_env_cfg.py](./unitree_rl_lab/. class ObservationCfg. (Just introduce what we do.)
+First, we add a foot_friction in [velocity_env_cfg.py](./unitree_rl_lab/source/unitree_rl_lab/unitree_rl_lab/tasks/locomotion/robots/go2/velocity_env_cfg.py) class ObservationCfg. (Just introduce what we do.)
 ```python
 @configclass
 class ObservationsCfg:
