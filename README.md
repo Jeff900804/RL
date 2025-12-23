@@ -16,6 +16,7 @@ conda activate env_isaaclab
 Ensure the latest pip version is installed. To update pip, run the following command from inside the virtual environment:
 ```bash
 pip install --upgrade pip
+pip install -r requirements.txt
 ```
 Install Isaac Sim pip packages:
 ```bash
