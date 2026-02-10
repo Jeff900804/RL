@@ -29,7 +29,7 @@ pip install -U torch==2.7.0 torchvision==0.22.0 --index-url https://download.pyt
 ### Installing Isaac Lab
 #### Cloning Isaac lab
 ```bash
-cd /payh/to/RL_Final_project
+cd /path/to/RL_Final_project
 git clone https://github.com/isaac-sim/IsaacLab.git
 ```
 #### Installation
